@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rugby Gym Planner</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── RESET & BASE ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #0d0f12;
+  --surface:   #151920;
+  --surface2:  #1c2330;
+  --border:    rgba(255,255,255,0.08);
+  --border2:   rgba(255,255,255,0.14);
+  --accent:    #c8ff00;
+  --accent2:   #00e5a0;
+  --text:      #f0f2f5;
+  --muted:     #7a8494;
+  --danger:    #ff4d4d;
+  --font-head: 'Bebas Neue', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --r:         10px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* ── UTILIDADES ──────────────────────────────────────── */
+.hidden { display: none !important; }
+.mono { font-family: 'DM Sans', monospace; }
+
+/* ── LOGIN ───────────────────────────────────────────── */
+#screen-login {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.login-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 80% 20%, rgba(200,255,0,0.07) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 60% at 10% 80%, rgba(0,229,160,0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.login-box {
+  width: 100%;
+  max-width: 380px;
+  position: relative;
+  z-index: 1;
+}
+
+.login-logo {
+  font-family: var(--font-head);
+  font-size: 52px;
+  letter-spacing: 2px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.login-logo span { color: var(--accent); }
+
+.login-sub {
+  color: var(--muted);
+  font-size: 13px;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  margin-bottom: 2.5rem;
+}
+
+.field-group { margin-bottom: 1rem; }
+
+.field-group label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.field-group input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  font-size: 15px;
+  font-family: var(--font-body);
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s;
+}
+
+.field-group input:focus { border-color: var(--accent); }
+
+.btn-primary {
+  width: 100%;
+  background: var(--accent);
+  color: #0d0f12;
+  border: none;
+  border-radius: var(--r);
+  padding: 13px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  letter-spacing: .04em;
+  cursor: pointer;
+  transition: opacity .15s, transform .1s;
+  margin-top: .5rem;
+}
+
+.btn-primary:hover { opacity: .9; }
+.btn-primary:active { transform: scale(.98); }
+.btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+
+.error-msg {
+  color: var(--danger);
+  font-size: 13px;
+  margin-top: .75rem;
+  text-align: center;
+  min-height: 20px;
+}
+
+/* ── APP SHELL ───────────────────────────────────────── */
+#screen-app { display: none; min-height: 100vh; padding-bottom: 4rem; }
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: rgba(13,15,18,.92);
+  backdrop-filter: blur(12px);
+  z-index: 10;
+}
+
+.topbar-logo {
+  font-family: var(--font-head);
+  font-size: 22px;
+  letter-spacing: 1px;
+}
+
+.topbar-logo span { color: var(--accent); }
+
+.topbar-right { display: flex; align-items: center; gap: 10px; }
+
+.player-badge {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 99px;
+  padding: 4px 12px 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.avatar {
+  width: 24px; height: 24px;
+  background: var(--accent);
+  color: #0d0f12;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.btn-logout {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  color: var(--muted);
+  padding: 5px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  font-family: var(--font-body);
+  transition: color .15s, border-color .15s;
+}
+
+.btn-logout:hover { color: var(--text); border-color: var(--border2); }
+
+/* ── MAIN CONTENT ────────────────────────────────────── */
+.content { padding: 1.5rem 1.25rem; max-width: 680px; margin: 0 auto; }
+
+/* ── SELECTOR DE DÍA ─────────────────────────────────── */
+.week-header {
+  margin-bottom: 1.5rem;
+}
+
+.week-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: .75rem;
+}
+
+.day-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.day-pill {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  color: var(--muted);
+  font-family: var(--font-body);
+}
+
+.day-pill:hover { border-color: rgba(200,255,0,.4); color: var(--text); }
+
+.day-pill.active {
+  background: var(--accent);
+  color: #0d0f12;
+  border-color: var(--accent);
+  font-weight: 600;
+}
+
+/* ── SESIÓN ──────────────────────────────────────────── */
+.session-title {
+  font-family: var(--font-head);
+  font-size: 36px;
+  letter-spacing: 1px;
+  line-height: 1;
+  margin-bottom: .25rem;
+}
+
+.session-meta {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 1.5rem;
+}
+
+.phase-header {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin: 1.5rem 0 .75rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.phase-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── EXERCISE CARD ───────────────────────────────────── */
+.ex-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: border-color .2s;
+}
+
+.ex-card.logged { border-color: rgba(0,229,160,.3); }
+
+.ex-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  cursor: pointer;
+}
+
+.block-id {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.ex-info { flex: 1; min-width: 0; }
+
+.ex-name {
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ex-tags {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.tag {
+  font-size: 11px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.tag-squat    { background: rgba(55,138,221,.15); color: #5fb3f5; }
+.tag-hinge    { background: rgba(29,158,117,.15); color: #3ecfa0; }
+.tag-push     { background: rgba(239,159,39,.15); color: #ffc04d; }
+.tag-row      { background: rgba(127,119,221,.15); color: #a99ff5; }
+.tag-pull     { background: rgba(99,153,34,.15);  color: #9acf44; }
+.tag-plyo     { background: rgba(226,75,74,.15);  color: #ff7070; }
+.tag-iso      { background: rgba(136,135,128,.15); color: #aaa; }
+.tag-other    { background: rgba(212,83,126,.15); color: #f07aaa; }
+.tag-neutral  { background: var(--surface2); color: var(--muted); }
+
+.ex-status {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border2);
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  transition: all .2s;
+}
+
+.ex-status.done {
+  background: var(--accent2);
+  border-color: var(--accent2);
+  color: #0d0f12;
+}
+
+/* ── LOG PANEL ───────────────────────────────────────── */
+.log-panel {
+  border-top: 1px solid var(--border);
+  padding: 14px;
+  display: none;
+  animation: slideDown .15s ease;
+}
+
+.log-panel.open { display: block; }
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.log-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.log-field label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+
+.log-field input, .log-field select, .log-field textarea {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 14px;
+  font-family: var(--font-body);
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s;
+}
+
+.log-field input:focus,
+.log-field select:focus,
+.log-field textarea:focus { border-color: var(--accent); }
+
+.log-field textarea { resize: vertical; min-height: 60px; }
+
+.rpe-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.rpe-btn {
+  flex: 1;
+  min-width: 32px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 7px 4px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--muted);
+  font-family: var(--font-body);
+  transition: all .15s;
+  text-align: center;
+}
+
+.rpe-btn:hover { color: var(--text); }
+.rpe-btn.sel { background: var(--accent); color: #0d0f12; border-color: var(--accent); }
+
+.log-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn-save {
+  flex: 1;
+  background: var(--accent);
+  color: #0d0f12;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: opacity .15s;
+}
+
+.btn-save:hover { opacity: .88; }
+.btn-save:disabled { opacity: .35; cursor: not-allowed; }
+
+.btn-cancel {
+  background: none;
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--font-body);
+}
+
+/* ── NOTAS DE SESIÓN ─────────────────────────────────── */
+.notes-banner {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin-top: 1.5rem;
+  border-radius: 0 var(--r) var(--r) 0;
+}
+
+.notes-banner strong { color: var(--text); }
+
+/* ── LOADER ──────────────────────────────────────────── */
+.loader {
+  text-align: center;
+  padding: 3rem;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.spinner {
+  width: 28px; height: 28px;
+  border: 2px solid var(--border2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+  margin: 0 auto 1rem;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── EMPTY STATE ─────────────────────────────────────── */
+.empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--muted);
+}
+
+.empty-icon { font-size: 36px; margin-bottom: .75rem; }
+
+/* ── CONFIG BANNER ───────────────────────────────────── */
+.config-banner {
+  background: rgba(200,255,0,.07);
+  border: 1px solid rgba(200,255,0,.2);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  color: #c8e87a;
+}
+
+.config-banner strong { color: var(--accent); }
+
+/* ── RESPONSIVE ──────────────────────────────────────── */
+@media (max-width: 500px) {
+  .log-row { grid-template-columns: 1fr; }
+  .session-title { font-size: 28px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════ LOGIN ═══════════ -->
+<div id="screen-login">
+  <div class="login-bg"></div>
+  <div class="login-box">
+    <div class="login-logo">RUGBY<span>GYM</span></div>
+    <div class="login-sub">Club Planner · Verano 2025</div>
+
+    <div class="field-group">
+      <label>Usuario</label>
+      <input type="text" id="input-user" placeholder="tu_usuario" autocomplete="username">
+    </div>
+    <div class="field-group">
+      <label>Contraseña</label>
+      <input type="password" id="input-pass" placeholder="••••••" autocomplete="current-password">
+    </div>
+
+    <button class="btn-primary" id="btn-login" onclick="doLogin()">Entrar</button>
+    <div class="error-msg" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ═══════════ APP ═══════════ -->
+<div id="screen-app">
+  <div class="topbar">
+    <div class="topbar-logo">RUGBY<span>GYM</span></div>
+    <div class="topbar-right">
+      <div class="player-badge">
+        <div class="avatar" id="avatar-initials">?</div>
+        <span id="player-name">Jugador</span>
+      </div>
+      <button class="btn-logout" onclick="logout()">Salir</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Banner configuración -->
+    <div class="config-banner" id="config-banner">
+      <strong>Modo demo</strong> — conecta tu Google Sheet para datos reales.
+      Abre <code>app.html</code>, busca <code>APPS_SCRIPT_URL</code> y pega la URL de tu deployment.
+    </div>
+
+    <!-- Selector semana/día -->
+    <div class="week-header">
+      <div class="week-label">Semana activa</div>
+      <div style="display:flex; gap:8px; margin-bottom:1rem; flex-wrap:wrap;">
+        <select id="sel-semana" onchange="loadRutina()" style="background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:7px 12px;color:var(--text);font-family:var(--font-body);font-size:13px;outline:none;">
+          <option value="1">Semana 1 — Low Force</option>
+          <option value="2">Semana 2 — Mid Force</option>
+          <option value="3">Semana 3 — High Force</option>
+          <option value="4">Semana 4 — Deload</option>
+        </select>
+      </div>
+      <div class="day-pills">
+        <button class="day-pill active" onclick="selectDay(1,this)">Day 1</button>
+        <button class="day-pill" onclick="selectDay(2,this)">Day 2</button>
+        <button class="day-pill" onclick="selectDay(3,this)">Day 3</button>
+        <button class="day-pill" onclick="selectDay(4,this)">Day 4</button>
+        <button class="day-pill" onclick="selectDay(5,this)">Extra</button>
+      </div>
+    </div>
+
+    <div id="session-container"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIGURACIÓN — reemplaza esta URL cuando despliegues
+// el Apps Script (Extensions > Apps Script > Deploy > New deployment)
+// ═══════════════════════════════════════════════════════════
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwMbCZV8o0LVuXRJVdcl6Mq4hI5DhHeeaLLoYXGwcUhY3fMLlj39EHK9GWQwuYq00t/exec';
+const DEMO_MODE = APPS_SCRIPT_URL.includes('TU_DEPLOYMENT_ID');
+
+// ── Estado global ──────────────────────────────────────────
+let state = {
+  user: null,
+  dia: 1,
+  semana: 1,
+  logs: {},       // { blockId: { carga, rpe, notas } }
+  openPanel: null
+};
+
+// ── Datos demo (mientras no hay Sheet conectado) ───────────
+const DEMO_USERS = [
+  { usuario: 'jugador1', password: '1234', nombre: 'Carlos López', posicion: 'Pilar' },
+  { usuario: 'jugador2', password: '1234', nombre: 'Marcos Ruiz', posicion: 'Hooker' },
+  { usuario: 'entrenador', password: 'rugby2025', nombre: 'Entrenador', posicion: 'Staff' }
+];
+
+const DEMO_RUTINA = {
+  '1-1': [
+    { bloque:'A1', patron:'Reset',          contraccion:'Dynamic',   ejercicio:'Box 90/90 Breathing w/ Add Iso',         sets:'',      reps:'',          tempo:'',    load_objetivo:'',     fase:'prep' },
+    { bloque:'A1', patron:'Squat',          contraccion:'Tempo',     ejercicio:'Bar Zercher Squat',                      sets:'4',     reps:'5(30\'\')5', tempo:'510', load_objetivo:'RPE 6', fase:'main' },
+    { bloque:'A2', patron:'Lb_aux',         contraccion:'Isometric', ejercicio:'Copenhagen Short Lever Plank Iso Hold',  sets:'4',     reps:'30\'\'e',    tempo:'',    load_objetivo:'BW',    fase:'main' },
+    { bloque:'B1', patron:'Hinge',          contraccion:'Tempo',     ejercicio:'Bar Rdl',                                sets:'4',     reps:'5',          tempo:'410', load_objetivo:'RPE 6', fase:'main' },
+    { bloque:'B2', patron:'Anti_rotation',  contraccion:'Isometric', ejercicio:'Bear Iso Kb Switch',                     sets:'3',     reps:'8e',         tempo:'',    load_objetivo:'BW',    fase:'main' },
+    { bloque:'C1', patron:'Plyo',           contraccion:'Dynamic',   ejercicio:'CMJ',                                    sets:'4',     reps:'5',          tempo:'',    load_objetivo:'BW',    fase:'main' },
+    { bloque:'D1', patron:'Up_aux',         contraccion:'Dynamic',   ejercicio:'4 Ways Neck Iso Hold',                   sets:'2',     reps:'10\'\'e',    tempo:'',    load_objetivo:'BW',    fase:'main' },
+  ],
+  '1-2': [
+    { bloque:'A1', patron:'Reset',          contraccion:'Dynamic',   ejercicio:'Box 90/90 Breathing w/ Add Iso',         sets:'',      reps:'',           tempo:'',    load_objetivo:'',     fase:'prep' },
+    { bloque:'A2', patron:'Vertical_pull',  contraccion:'Tempo',     ejercicio:'Pull Ups',                               sets:'3',     reps:'5',          tempo:'310', load_objetivo:'BW',    fase:'prep' },
+    { bloque:'A1', patron:'Horizontal_push',contraccion:'Tempo',     ejercicio:'1 Db Floor Press',                       sets:'4',     reps:'5(30\'\')5', tempo:'510', load_objetivo:'RPE 6', fase:'main' },
+    { bloque:'A2', patron:'Lb_aux',         contraccion:'Isometric', ejercicio:'Copenhagen Short Lever Plank Iso Hold',  sets:'4',     reps:'30\'\'e',    tempo:'',    load_objetivo:'BW',    fase:'main' },
+    { bloque:'B1', patron:'Horizontal_row', contraccion:'Tempo',     ejercicio:'2 Db Seal Row',                          sets:'4',     reps:'8',          tempo:'310', load_objetivo:'RPE 6', fase:'main' },
+    { bloque:'C1', patron:'Plyo',           contraccion:'Dynamic',   ejercicio:'Banded Broad Jump',                      sets:'4',     reps:'5',          tempo:'',    load_objetivo:'BW',    fase:'main' },
+  ],
+  '1-3': [
+    { bloque:'A1', patron:'Reset',          contraccion:'Dynamic',   ejercicio:'Deadbug Band Iso',                       sets:'',      reps:'',           tempo:'',    load_objetivo:'',     fase:'prep' },
+    { bloque:'A2', patron:'Vertical_pull',  contraccion:'Tempo',     ejercicio:'Pull Ups',                               sets:'3',     reps:'5',          tempo:'310', load_objetivo:'BW',   fase:'prep' },
+    { bloque:'A1', patron:'Squat',          contraccion:'Tempo',     ejercicio:'1 Kb Low Step Up',                       sets:'4',     reps:'6e',         tempo:'310', load_objetivo:'RPE 6', fase:'main' },
+    { bloque:'A2', patron:'Iso',            contraccion:'Isometric', ejercicio:'Bear Bench Plank',                       sets:'3',     reps:'30\'\'',     tempo:'',    load_objetivo:'BW',    fase:'main' },
+    { bloque:'B1', patron:'Vertical_push',  contraccion:'Dynamic',   ejercicio:'2 Db Push Press',                        sets:'4',     reps:'5',          tempo:'',    load_objetivo:'RPE 6', fase:'main' },
+    { bloque:'C1', patron:'Plyo',           contraccion:'Dynamic',   ejercicio:'1-Leg CMJ',                              sets:'4',     reps:'5e',         tempo:'',    load_objetivo:'BW',    fase:'main' },
+  ],
+  '1-4': [
+    { bloque:'A1', patron:'Reset',          contraccion:'Dynamic',   ejercicio:'Box 90/90 Breathing w/ Add Iso',         sets:'',      reps:'',           tempo:'',    load_objetivo:'',     fase:'prep' },
+    { bloque:'A1', patron:'Olympics',       contraccion:'Dynamic',   ejercicio:'2 Db Hang Clean',                        sets:'5',     reps:'4',          tempo:'',    load_objetivo:'RPE 7', fase:'main' },
+    { bloque:'B1', patron:'Squat',          contraccion:'Tempo',     ejercicio:'Bar SSQ',                                sets:'4',     reps:'5',          tempo:'310', load_objetivo:'RPE 6', fase:'main' },
+    { bloque:'B2', patron:'Hinge',          contraccion:'Tempo',     ejercicio:'1-Leg Rdl to Row',                       sets:'3',     reps:'8e',         tempo:'310', load_objetivo:'RPE 6', fase:'main' },
+    { bloque:'C1', patron:'Plyo',           contraccion:'Dynamic',   ejercicio:'Drop Jump',                              sets:'4',     reps:'5',          tempo:'',    load_objetivo:'BW',    fase:'main' },
+  ],
+  '1-5': [
+    { bloque:'A1', patron:'Reset',          contraccion:'Dynamic',   ejercicio:'Deadbug Band Iso',                       sets:'',      reps:'',           tempo:'',    load_objetivo:'',     fase:'prep' },
+    { bloque:'A1', patron:'Lb_aux',         contraccion:'Dynamic',   ejercicio:'Copenhagen Add Dynamic',                 sets:'3',     reps:'12e',        tempo:'',    load_objetivo:'BW',    fase:'main' },
+    { bloque:'B1', patron:'Anti_extension', contraccion:'Isometric', ejercicio:'Barbell Roll Outs',                      sets:'3',     reps:'8',          tempo:'',    load_objetivo:'BW',    fase:'main' },
+    { bloque:'C1', patron:'Up_aux',         contraccion:'Dynamic',   ejercicio:'Band Resisted Neck Flexion',             sets:'3',     reps:'15',         tempo:'',    load_objetivo:'Light', fase:'main' },
+  ]
+};
+
+// ── Helpers ────────────────────────────────────────────────
+const patternTag = p => {
+  const map = {
+    Squat:'tag-squat',Hinge:'tag-hinge',Horizontal_push:'tag-push',
+    Horizontal_row:'tag-row',Vertical_push:'tag-push',Vertical_pull:'tag-pull',
+    Plyo:'tag-plyo',Iso:'tag-iso',Olympics:'tag-other',
+    Anti_rotation:'tag-other',Anti_extension:'tag-other',Reset:'tag-neutral'
+  };
+  return map[p]||'tag-neutral';
+};
+
+const logKey = (bloque, ejercicio) => `${bloque}::${ejercicio}`;
+
+// ── API calls ──────────────────────────────────────────────
+async function api(payload) {
+  if (DEMO_MODE) return demoApi(payload);
+  try {
+    const r = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      redirect: 'follow'
+    });
+    const text = await r.text();
+    try { return JSON.parse(text); }
+    catch { console.error('Respuesta no válida:', text); return { ok: false, error: 'Respuesta inesperada del servidor. Revisa la consola (F12).' }; }
+  } catch (err) {
+    console.error('Error de red:', err);
+    return { ok: false, error: 'Error de red: ' + err.message };
+  }
+}
+
+
+function demoApi(payload) {
+  if (payload.action === 'login') {
+    const u = DEMO_USERS.find(x => x.usuario===payload.usuario && x.password===payload.password);
+    return u ? { ok:true, ...u } : { ok:false, error:'Usuario o contraseña incorrectos' };
+  }
+  if (payload.action === 'getRutina') {
+    const key = `${payload.semana}-${payload.dia}`;
+    return { ok:true, ejercicios: DEMO_RUTINA[key] || [] };
+  }
+  if (payload.action === 'saveRegistro') {
+    console.log('[DEMO] Registro guardado:', payload);
+    return { ok:true };
+  }
+  return { ok:false, error:'Acción no disponible' };
+}
+
+// ── LOGIN ──────────────────────────────────────────────────
+async function doLogin() {
+  const btn = document.getElementById('btn-login');
+  const errEl = document.getElementById('login-error');
+  const usuario = document.getElementById('input-user').value.trim();
+  const password = document.getElementById('input-pass').value;
+
+  if (!usuario || !password) { errEl.textContent = 'Rellena usuario y contraseña'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Entrando...';
+  errEl.textContent = '';
+
+  const res = await api({ action:'login', usuario, password });
+
+  if (res.ok) {
+    state.user = res;
+    document.getElementById('player-name').textContent = res.nombre;
+    document.getElementById('avatar-initials').textContent =
+      res.nombre.split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase();
+    document.getElementById('screen-login').style.display = 'none';
+    document.getElementById('screen-app').style.display = 'block';
+    if (!DEMO_MODE) document.getElementById('config-banner').classList.add('hidden');
+    loadRutina();
+  } else {
+    errEl.textContent = res.error || 'Error al iniciar sesión';
+    btn.disabled = false;
+    btn.textContent = 'Entrar';
+  }
+}
+
+document.getElementById('input-pass').addEventListener('keydown', e => {
+  if (e.key==='Enter') doLogin();
+});
+
+// ── SELECCIÓN DÍA ──────────────────────────────────────────
+function selectDay(dia, btn) {
+  state.dia = dia;
+  document.querySelectorAll('.day-pill').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  loadRutina();
+}
+
+// ── CARGA RUTINA ───────────────────────────────────────────
+async function loadRutina() {
+  state.semana = parseInt(document.getElementById('sel-semana').value);
+  const container = document.getElementById('session-container');
+  container.innerHTML = `<div class="loader"><div class="spinner"></div>Cargando sesión...</div>`;
+
+  const res = await api({ action:'getRutina', semana: state.semana, dia: state.dia });
+
+  if (!res.ok || !res.ejercicios.length) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">📋</div>No hay ejercicios para este día todavía.</div>`;
+    return;
+  }
+
+  renderSession(res.ejercicios);
+}
+
+// ── RENDER SESIÓN ──────────────────────────────────────────
+function renderSession(ejercicios) {
+  const container = document.getElementById('session-container');
+  const dayNames = ['','Lunes — Day 1','Martes — Day 2','Miércoles — Day 3','Jueves — Day 4','Sábado — Extra'];
+  const semanaNombre = document.getElementById('sel-semana').options[document.getElementById('sel-semana').selectedIndex].text;
+
+  const prep = ejercicios.filter(e => e.fase==='prep');
+  const main = ejercicios.filter(e => e.fase==='main' || !e.fase || e.fase==='');
+
+  const renderBlock = (e, i) => {
+    const key = logKey(e.bloque, e.ejercicio);
+    const logged = state.logs[key];
+    const isPrep = e.fase==='prep';
+
+    const tags = [
+      e.patron ? `<span class="tag ${patternTag(e.patron)}">${e.patron.replace('_',' ')}</span>` : '',
+      e.contraccion ? `<span class="tag tag-neutral">${e.contraccion}</span>` : '',
+      e.sets ? `<span class="tag tag-neutral">${e.sets} sets</span>` : '',
+      e.reps ? `<span class="tag tag-neutral">${e.reps}</span>` : '',
+      e.tempo ? `<span class="tag tag-neutral">Tempo ${e.tempo}</span>` : '',
+      e.load_objetivo ? `<span class="tag tag-neutral">${e.load_objetivo}</span>` : '',
+    ].filter(Boolean).join('');
+
+    return `
+    <div class="ex-card${logged?' logged':''}" id="card-${key.replace(/[^a-z0-9]/gi,'_')}">
+      <div class="ex-header" onclick="${isPrep ? '' : `togglePanel('${key}')`}" style="${isPrep?'cursor:default':''}">
+        <div class="block-id">${e.bloque}</div>
+        <div class="ex-info">
+          <div class="ex-name">${e.ejercicio}</div>
+          <div class="ex-tags">${tags}</div>
+        </div>
+        ${!isPrep ? `<div class="ex-status${logged?' done':''}">
+          ${logged ? '✓' : ''}
+        </div>` : ''}
+      </div>
+      ${!isPrep ? `
+      <div class="log-panel" id="panel-${key.replace(/[^a-z0-9]/gi,'_')}">
+        <div class="log-row">
+          <div class="log-field">
+            <label>Carga (kg)</label>
+            <input type="number" id="carga-${key.replace(/[^a-z0-9]/gi,'_')}" placeholder="ej. 60" value="${logged?.carga||''}">
+          </div>
+          <div class="log-field">
+            <label>Notas</label>
+            <input type="text" id="notas-${key.replace(/[^a-z0-9]/gi,'_')}" placeholder="opcional" value="${logged?.notas||''}">
+          </div>
+        </div>
+        <div class="log-field" style="margin-bottom:10px">
+          <label>RPE percibido</label>
+          <div class="rpe-row" id="rpe-${key.replace(/[^a-z0-9]/gi,'_')}">
+            ${[6,7,8,9,10].map(n=>`<button class="rpe-btn${logged?.rpe==n?' sel':''}" onclick="selectRpe('${key}',${n},this)">${n}</button>`).join('')}
+          </div>
+        </div>
+        <div class="log-actions">
+          <button class="btn-save" onclick="saveLog('${key}','${e.ejercicio}','${e.bloque}')">Guardar registro</button>
+          <button class="btn-cancel" onclick="togglePanel('${key}')">Cancelar</button>
+        </div>
+      </div>` : ''}
+    </div>`;
+  };
+
+  container.innerHTML = `
+    <div class="session-title">${dayNames[state.dia]||'Sesión'}</div>
+    <div class="session-meta">${semanaNombre}</div>
+
+    ${prep.length ? `
+      <div class="phase-header">Prep</div>
+      ${prep.map(renderBlock).join('')}` : ''}
+
+    <div class="phase-header">Main Block</div>
+    ${main.map(renderBlock).join('')}
+
+    <div class="notes-banner">
+      <strong>Nota tempo:</strong> ECC-ISO-CC.
+      Ejemplo <strong>510</strong>: 5'' excéntrica · 1'' pausa fondo de rango · 0'' concéntrica explosiva.
+    </div>`;
+}
+
+// ── PANEL LOG ──────────────────────────────────────────────
+function togglePanel(key) {
+  const safeKey = key.replace(/[^a-z0-9]/gi,'_');
+  const panel = document.getElementById('panel-'+safeKey);
+  if (!panel) return;
+  const isOpen = panel.classList.contains('open');
+  if (state.openPanel && state.openPanel !== safeKey) {
+    document.getElementById('panel-'+state.openPanel)?.classList.remove('open');
+  }
+  panel.classList.toggle('open', !isOpen);
+  state.openPanel = isOpen ? null : safeKey;
+}
+
+function selectRpe(key, val, btn) {
+  const safeKey = key.replace(/[^a-z0-9]/gi,'_');
+  document.querySelectorAll(`#rpe-${safeKey} .rpe-btn`).forEach(b => b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+
+async function saveLog(key, ejercicio, bloque) {
+  const safeKey = key.replace(/[^a-z0-9]/gi,'_');
+  const carga = document.getElementById('carga-'+safeKey)?.value;
+  const notas = document.getElementById('notas-'+safeKey)?.value || '';
+  const rpeBtn = document.querySelector(`#rpe-${safeKey} .rpe-btn.sel`);
+  const rpe = rpeBtn ? parseInt(rpeBtn.textContent) : null;
+
+  const btn = document.querySelector(`#panel-${safeKey} .btn-save`);
+  btn.disabled = true;
+  btn.textContent = 'Guardando...';
+
+  const res = await api({
+    action: 'saveRegistro',
+    usuario: state.user.usuario,
+    semana: state.semana,
+    dia: state.dia,
+    bloque, ejercicio,
+    carga_real: carga || '',
+    rpe: rpe || '',
+    notas_jugador: notas
+  });
+
+  if (res.ok) {
+    state.logs[key] = { carga, rpe, notas };
+    togglePanel(key);
+    loadRutina();
+  } else {
+    btn.disabled = false;
+    btn.textContent = 'Guardar registro';
+    alert('Error al guardar: ' + (res.error||'inténtalo de nuevo'));
+  }
+}
+
+// ── LOGOUT ─────────────────────────────────────────────────
+function logout() {
+  state = { user:null, dia:1, semana:1, logs:{}, openPanel:null };
+  document.getElementById('screen-app').style.display = 'none';
+  document.getElementById('screen-login').style.display = 'flex';
+  document.getElementById('input-user').value = '';
+  document.getElementById('input-pass').value = '';
+  document.getElementById('btn-login').disabled = false;
+  document.getElementById('btn-login').textContent = 'Entrar';
+}
+</script>
+</body>
+</html>
